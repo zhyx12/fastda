@@ -1,3 +1,6 @@
 # FastDA
 
-This is a simple framework for unsupervised domain adaptation. You can use to build your method.
+This is a simple framework for domain adaptation training. You can use it to build your own training process.
+
+
+
