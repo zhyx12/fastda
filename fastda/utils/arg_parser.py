@@ -14,8 +14,6 @@ def fastda_arg_parser(project_root, source_code_name, config_path='', trainer_cl
     parser.add_argument('--debug', default=False)
     parser.add_argument('--train_debug_sample_num', type=int, default=10)
     parser.add_argument('--test_debug_sample_num', type=int, default=10)
-    parser.add_argument('--debug_log_interval', type=int, default=1)
-    parser.add_argument('--debug_val_interval', type=int, default=8)
     parser.add_argument('--trainer', help='trainer classes', default=trainer_class)
     parser.add_argument('--validator', help='validator classes', default=trainer_class)
     parser.add_argument('--data_root', help='dataset root path', default=data_root)

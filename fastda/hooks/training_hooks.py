@@ -45,6 +45,7 @@ class LrRecorder(Hook):
         self.writer = get_root_writer()
         self.logger = get_root_logger()
 
+    @master_only
     def after_train_iter(self, runner):
         if (runner.iteration + 1) % self.log_interval == 0:
             log_str = 'iter:{}---'.format(runner.iteration + 1)
@@ -112,9 +113,11 @@ class TrainTimeRecoder(Hook):
         self.running_metrics.add_metrics('speed', group_name='training_speed', log_interval=log_interval)
         self.running_metrics.add_metrics('forward_speed', group_name='training_speed', log_interval=log_interval)
 
+    @master_only
     def before_train_iter(self, runner):
         self.forward_start_time = time.time()
 
+    @master_only
     def after_train_iter(self, runner):
         self.running_metrics.update_metrics({'training_speed': {'speed': time.time() - self.start_time}})
         self.running_metrics.update_metrics(
@@ -139,6 +142,7 @@ class SaveModel(Hook):
         self.save_interval = save_interval
         self.max_iters = max_iters
 
+    @master_only
     def after_train_iter(self, runner):
         if (runner.iteration + 1) % self.save_interval == 0 or (runner.iteration + 1) == self.max_iters:
             save_path = os.path.join(runner.logdir, "iter_{}_model.pth".format(runner.iteration + 1))

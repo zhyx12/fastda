@@ -14,6 +14,7 @@ from torch.utils.data import RandomSampler
 from torch.utils.data._utils.pin_memory import pin_memory
 from torch.utils.data.distributed import DistributedSampler
 from mmcv.utils import build_from_cfg
+from fastda.utils import get_root_logger
 
 DATASETS = Registry('fastda_datasets')
 DATABUILDERS = Registry('fastda_databuilders')
@@ -52,8 +53,9 @@ class DefaultDataBuilder(object):
         random.seed(worker_seed)
 
 
-def process_one_dataset(args, pipelines, samplers_per_gpu, n_workers, shuffle, debug=False,
-                        sample_num=10, drop_last=True, data_root=None, random_seed=None):
+def process_one_dataset(args, pipelines, samplers_per_gpu, n_workers, shuffle,
+                        drop_last=True, data_root=None, random_seed=None,
+                        debug=False, sample_num=None):
     dataset_params = deepcopy(args)
     #
     if 'pipeline' not in args:
@@ -70,40 +72,37 @@ def process_one_dataset(args, pipelines, samplers_per_gpu, n_workers, shuffle, d
     #
     dataset = build_from_cfg(dataset_params, DATASETS)
     #
-    if debug:
-        print('dataset has {} images'.format(len(dataset)))
-        random_sampler = RandomSampler(dataset, replacement=True, num_samples=sample_num)
-        loader = data.DataLoader(dataset, batch_size=temp_samples_per_gpu, num_workers=n_workers, pin_memory=True,
-                                 sampler=random_sampler, collate_fn=collate)
+    dataloader_params = dict(
+        dataset=dataset,
+        samples_per_gpu=temp_samples_per_gpu,
+        num_workers=n_workers,
+        shuffle=shuffle,
+        pin_memory=pin_memory,
+        drop_last=drop_last,
+        seed=random_seed,
+    )
+    if 'task_specific' in DATABUILDERS:
+        type_param = {'type': 'task_specific'}
     else:
-        dataloader_params = dict(
-            dataset=dataset,
-            samples_per_gpu=temp_samples_per_gpu,
-            num_workers=n_workers,
-            shuffle=shuffle,
-            pin_memory=pin_memory,
-            drop_last=drop_last,
-            seed=random_seed,
-        )
-        if 'task_specific' in DATABUILDERS:
-            type_param = {'type': 'task_specific'}
-        else:
-            type_param = {'type': 'default'}
-        dataloader_params.update(type_param)
-        loader = build_from_cfg(dataloader_params, DATABUILDERS).get_dataloader()
+        type_param = {'type': 'default'}
+    dataloader_params.update(type_param)
+    loader = build_from_cfg(dataloader_params, DATABUILDERS).get_dataloader()
     return loader
 
 
-def parse_args_for_multiple_datasets(dataset_args, debug=False, train_debug_sample_num=10,
-                                     test_debug_sample_num=10, random_seed=None, data_root=None):
+def parse_args_for_multiple_datasets(dataset_args, random_seed=None, data_root=None, debug=False,
+                                     train_debug_sample_num=None, test_debug_sample_num=None):
     """
 
+    :param data_root:
+    :param random_seed:
     :param dataset_args:
     :param debug:
     :param train_debug_sample_num:
     :param test_debug_sample_num:
     :return: 返回一个list
     """
+    logger = get_root_logger()
     if debug:
         print("YOU ARE IN DEBUG MODE!!!!!!!!!!!!!!!!!!!")
     # Setup Augmentations
@@ -151,5 +150,7 @@ def parse_args_for_multiple_datasets(dataset_args, debug=False, train_debug_samp
             test_loaders.append(temp_test_loader)
         else:
             break
-
+    #
+    for i, loader in enumerate(train_loaders):
+        logger.info('{} train loader has {} images'.format(i, len(loader.dataset)))
     return train_loaders, test_loaders
