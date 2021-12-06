@@ -7,7 +7,7 @@ import torch.utils.tensorboard as tb
 from ..hooks import _build_hook, _register_hook
 import time
 from ..utils import get_root_logger, move_data_to_gpu
-from ..hooks import BackwardUpdate
+from ..hooks import OptimizerHook
 from mmcv.runner import get_priority
 
 
@@ -119,7 +119,7 @@ class BaseTrainer(object):
 
     def register_hook(self, hook, priority='NORMAL'):
         #
-        if isinstance(hook, BackwardUpdate):
+        if isinstance(hook, OptimizerHook):
             assert get_priority(
                 priority) < 90, 'BackwardUpdate hook should have priority higher than very low of scheduler_step hook'
         _register_hook(self, hook, priority)
