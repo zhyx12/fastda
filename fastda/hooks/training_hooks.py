@@ -39,7 +39,7 @@ class MetricsLogger(Hook):
         self.running_metrics.log_metrics(runner.iteration + 1)
 
 
-class LrRecorder(Hook):
+class LrLogger(Hook):
     def __init__(self, log_interval):
         self.log_interval = log_interval
         self.writer = get_root_writer()
@@ -57,7 +57,7 @@ class LrRecorder(Hook):
             self.logger.info(log_str)
 
 
-class BackwardUpdate(Hook):
+class OptimizerHook(Hook):
     def __init__(self, update_iter=1):
         self.update_iter = 1
 
@@ -75,7 +75,7 @@ class BackwardUpdate(Hook):
                 runner.optimizer_dict[name].step()
 
 
-class BackwardUpdatewithAMP(Hook):
+class OptimizerHookwithAMP(Hook):
     def __init__(self, update_iter=1):
         self.update_iter = update_iter
 
@@ -105,7 +105,7 @@ class SchedulerStep(Hook):
                 runner.scheduler_dict[name].step()
 
 
-class TrainTimeRecoder(Hook):
+class TrainTimeLogger(Hook):
     def __init__(self, log_interval):
         self.start_time = time.time()
         self.forward_start_time = time.time()
@@ -136,7 +136,7 @@ class GradientClipper(Hook):
                 clip_gradient(runner.model_dict[name], self.max_num)
 
 
-class SaveModel(Hook):
+class SaveCheckpoint(Hook):
     def __init__(self, max_save_num=0, save_interval=100000000, max_iters=1000000000):
         self.max_save_num = max_save_num
         self.save_interval = save_interval

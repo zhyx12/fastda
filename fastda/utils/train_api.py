@@ -11,7 +11,7 @@ from ..models import parse_args_for_models
 from . import deal_with_val_interval
 #
 import time
-from ..hooks import LrRecorder, TrainTimeRecoder, SaveModel, SchedulerStep
+from ..hooks import LrLogger, TrainTimeLogger, SaveCheckpoint, SchedulerStep
 from mmcv import Config
 from ..runner import build_trainer, build_validator
 from mmcv.runner import get_dist_info
@@ -140,16 +140,16 @@ def train(args):
         validator(trainer.iteration)
         exit(0)
     ########################################
+    # register training hooks
     log_interval = control_cfg.log_interval
     updater_iter = control_cfg.get('update_iter', 1)
-    scheduler_step = SchedulerStep(updater_iter)
-    trainer.register_hook(scheduler_step, priority='VERY_LOW')
-    # register training hooks
-    lr_recoder = LrRecorder(log_interval)
-    train_time_recoder = TrainTimeRecoder(log_interval)
-    trainer.register_hook(lr_recoder, priority='HIGH')
+    train_time_recoder = TrainTimeLogger(log_interval)
     trainer.register_hook(train_time_recoder)
-    save_model_hook = SaveModel(control_cfg['max_save_num'], save_interval=control_cfg['save_interval'])
+    scheduler_step = SchedulerStep(updater_iter)
+    lr_recoder = LrLogger(log_interval)
+    trainer.register_hook(lr_recoder, priority='HIGH')
+    trainer.register_hook(scheduler_step, priority='VERY_LOW')
+    save_model_hook = SaveCheckpoint(control_cfg['max_save_num'], save_interval=control_cfg['save_interval'])
     trainer.register_hook(save_model_hook,
                           priority='LOWEST')  # save model after scheduler step to get the right iteration number
     # deal with val_interval

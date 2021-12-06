@@ -5,13 +5,13 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
   name="fastda",
-  version="0.0.1",
-  author="Example Author",
+  version="0.0.7",
+  author="Yixin Zhang",
   author_email="zhyx12@mail.ustc.edu.cn",
   description="A simple framework for unsupervised domain adaptation",
   long_description=long_description,
   long_description_content_type="text/markdown",
-  url="https://github.com/zhyx12/RPA",
+  url="https://github.com/zhyx12/fastda",
   packages=setuptools.find_packages(),
   classifiers=[
   "Programming Language :: Python :: 3",
