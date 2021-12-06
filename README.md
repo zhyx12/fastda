@@ -28,9 +28,9 @@ For dataset and model which are the basic parts for training, we define a set of
 
 For the training and testing process, MMCV use the [Runner](https://mmcv.readthedocs.io/en/latest/understand_mmcv/runner.html) class to control them. Two kinds of runners are provided, namely [**EpochBasedRunner**](https://mmcv.readthedocs.io/en/latest/understand_mmcv/runner.html#epochbasedrunner) and [**IterBasedRunner** ](https://mmcv.readthedocs.io/en/latest/understand_mmcv/runner.html#iterbasedrunner). The latter one is more natural for domain adaptation training since the number of samples in the source and target datasets are always different and it is hard to define an epoch. Actually, most methods report their implementation details based on iterations but not epochs.
 
-Instead of directly using IterBasedRunner where the whole training process are wrapped in a single top-level model 's train_step() function, we put interaction among different models in a [Trainer](./fastda/runner/trainer.py). It can be regarded as a *minimum* implementation of basic running process, which can take care of  text logging, tensorboard logging, checkpoint saving, resume training, scheduler step etc. This is achieved by registering predefined [hooks](./fastda/hooks/training_hooks.y) to trainer.
+Instead of directly using IterBasedRunner where the whole training process are wrapped in a single top-level model 's train_step() function, we put interaction among different models in a [Trainer](./fastda/runner/trainer.py). It can be regarded as a *minimum* implementation of basic running process, which can take care of  text logging, tensorboard logging, checkpoint saving, resume training, scheduler step etc. This is achieved by registering predefined [hooks](./fastda/hooks/training_hooks.py) to trainer.
 
-Besides Trainer, we also introduce [Validator](./fastda/fastda/runner/validator.py) to control the validation (testing) process. There is not default hook for validator. When building your own project, you should create a task-specific evaluation hook and register it to validator.
+Besides Trainer, we also introduce [Validator](./fastda/runner/validator.py) to control the validation (testing) process. There is not default hook for validator. When building your own project, you should create a task-specific evaluation hook and register it to validator.
 
 
 
