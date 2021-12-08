@@ -2,7 +2,7 @@ import torch
 import inspect
 from torch.optim.lr_scheduler import _LRScheduler
 from .builder import SCHEDULER
-
+from mmcv.utils import TORCH_VERSION, digit_version
 
 def register_torch_schedulers():
     torch_schedulers = []
@@ -20,13 +20,14 @@ def register_torch_schedulers():
 TORCH_SCHEDULER = register_torch_schedulers()
 
 
-@SCHEDULER.register_module()
-class ConstantLR(_LRScheduler):
-    def __init__(self, optimizer, last_epoch=-1):
-        super(ConstantLR, self).__init__(optimizer, last_epoch)
+if digit_version(TORCH_VERSION) < digit_version('1.10.0'):
+    @SCHEDULER.register_module()
+    class ConstantLR(_LRScheduler):
+        def __init__(self, optimizer, last_epoch=-1):
+            super(ConstantLR, self).__init__(optimizer, last_epoch)
 
-    def get_lr(self):
-        return [base_lr for base_lr in self.base_lrs]
+        def get_lr(self):
+            return [base_lr for base_lr in self.base_lrs]
 
 
 @SCHEDULER.register_module()

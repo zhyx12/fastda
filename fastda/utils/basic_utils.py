@@ -9,6 +9,7 @@ import numpy as np
 import random
 import torch.distributed as dist
 
+
 def move_data_to_gpu(cpu_data, gpu_id):
     relocated_data = cpu_data
     if isinstance(cpu_data, Sequence):
@@ -23,15 +24,24 @@ def move_data_to_gpu(cpu_data, gpu_id):
     return relocated_data
 
 
-def move_models_to_gpu(model, device, max_card=0, find_unused_parameters=False):
+def move_models_to_gpu(model, device, max_card=0, find_unused_parameters=False, broadcast_buffers=False):
+    """
+    :param model:
+    :param device:
+    :param max_card:
+    :param find_unused_parameters:
+    :param broadcast_buffers: set default value to False, which is also adopted in mmcls/mmseg/mmdet, the real control lies in models builder.py
+    :return:
+    """
     #
     rank, world_size = get_dist_info()
     #
     tmp_rank = rank * max_card + device
     model = model.to('cuda:{}'.format(tmp_rank))
     model = MMDistributedDataParallel(model, device_ids=[tmp_rank],
-                                    output_device=tmp_rank,
-                                    find_unused_parameters=find_unused_parameters)
+                                      output_device=tmp_rank,
+                                      find_unused_parameters=find_unused_parameters,
+                                      broadcast_buffers=broadcast_buffers)
     return model
 
 
@@ -100,7 +110,7 @@ def init_random_seed(seed=None, device='cuda'):
     # some potential bugs. Please refer to
     # https://github.com/open-mmlab/mmdetection/issues/6339
     rank, world_size = get_dist_info()
-    seed = np.random.randint(2**31)
+    seed = np.random.randint(2 ** 31)
     if world_size == 1:
         return seed
 
@@ -129,6 +139,7 @@ def set_random_seed(seed, deterministic=False):
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
 
+
 # utils
 @torch.no_grad()
 def concat_all_gather(tensor):
@@ -141,7 +152,3 @@ def concat_all_gather(tensor):
     torch.distributed.all_gather(tensors_gather, tensor, async_op=False)
     output = torch.cat(tensors_gather, dim=0)
     return output
-
-
-if __name__ == "__main__":
-    pass
