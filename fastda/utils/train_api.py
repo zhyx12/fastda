@@ -68,20 +68,14 @@ def train(args):
     logger.info('Environment info:\n' + dash_line + env_info + '\n' +
                 dash_line)
     # Setup random seeds, and cudnn_deterministic mode
-    random_seed = init_random_seed(control_cfg.seed)
+    seed = control_cfg.get('seed', None)
+    random_seed = init_random_seed(seed)
     logger.info(f'Set random random_seed to {random_seed}, '
                 f'deterministic: {control_cfg.cudnn_deterministic}')
     set_random_seed(random_seed, deterministic=control_cfg.cudnn_deterministic)
     #
-    # debug mode: set dataset sample number
-    debug_flag = args.debug
-    train_debug_sample_num = args.train_debug_sample_num
-    test_debug_sample_num = args.test_debug_sample_num
-    #
     # build dataloader
-    train_loaders, test_loaders = parse_args_for_multiple_datasets(cfg['datasets'], debug=debug_flag,
-                                                                   train_debug_sample_num=train_debug_sample_num,
-                                                                   test_debug_sample_num=test_debug_sample_num,
+    train_loaders, test_loaders = parse_args_for_multiple_datasets(cfg['datasets'],
                                                                    random_seed=random_seed, data_root=args.data_root)
     #
     # build model and corresponding optimizer, scheduler
