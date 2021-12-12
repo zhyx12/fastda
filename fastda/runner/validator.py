@@ -20,13 +20,14 @@ class BaseValidator(object):
             test_loaders = (test_loaders,)
         else:
             test_loaders = test_loaders
-        # TODO:当前依赖于名字，所以xml文件中有两个一样的，只会保留最后一个
         for ind, loader in enumerate(test_loaders):
-            self.test_loaders[loader.dataset.name + '_' + loader.dataset.split] = loader
+            tmp_name = loader.dataset.name + '_' + loader.dataset.split
+            assert tmp_name not in self.test_loaders, '{} appears as least twice in test loaders, give it another name or split'.format(
+                tmp_name)
+            self.test_loaders[tmp_name] = loader
         self.best_metrics = None
         self.batch_output = {}  # 每一次迭代产生的结果
         self.start_index = 0
-        self.class_num = test_loaders[0].dataset.n_classes
         # 设置网络
         self.model_dict = model_dict
         #

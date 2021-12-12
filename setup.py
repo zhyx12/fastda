@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
   name="fastda",
-  version="0.0.7",
+  version="0.0.10",
   author="Yixin Zhang",
   author_email="zhyx12@mail.ustc.edu.cn",
   description="A simple framework for unsupervised domain adaptation",

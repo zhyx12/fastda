@@ -33,4 +33,4 @@ def get_root_writer(log_dir=None):
             else:
                 raise RuntimeError('You have initialized the tensorboard writer before')
     else:
-        return EmptySummaryWriter
+        return EmptySummaryWriter()

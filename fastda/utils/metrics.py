@@ -69,11 +69,29 @@ class RunningMetric(object):
                 for name in temp_group:
                     self.metrics[group_name][name].update(temp_group[name])
 
-    def log_metrics(self, iteration, force_log=False):
-        for group_name in self.metrics:
+    def log_metrics(self, iteration, force_log=False, partial_log=None):
+        if partial_log is None:
+            log_names = {}
+            for group_name in self.metrics:
+                for name in self.metrics[group_name]:
+                    if group_name not in log_names:
+                        log_names[group_name] = [name,]
+                    else:
+                        log_names[group_name].append(name)
+        else:
+            for group_name in partial_log:
+                assert group_name in self.metrics, '{} is not in metrics'.format(group_name)
+                tmp_name = partial_log[group_name]
+                if isinstance(tmp_name,str):
+                    partial_log[group_name] = [tmp_name,]
+                for name in partial_log[group_name]:
+                    assert name in self.metrics[group_name],'{} is not in {} group'.format(name,group_name)
+            log_names = partial_log
+        #
+        for group_name in log_names:
             if (iteration % self.log_intervals[group_name] == 0 and iteration > 0) or force_log:
                 log_str = 'iter:{}---'.format(iteration)
-                for name in self.metrics[group_name]:
+                for name in log_names[group_name]:
                     temp_log_str = self.metrics[group_name][name].log_to_writer(self.writer, iteration, group_name)
                     if self.log_str_flag[group_name]:
                         log_str += temp_log_str

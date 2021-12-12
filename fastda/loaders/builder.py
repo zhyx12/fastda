@@ -63,6 +63,9 @@ def process_one_dataset(dataset_args, databuilder_args, pipelines, data_root, sa
         dataset_params['data_root'] = data_root
     #
     dataset = build_from_cfg(dataset_params, DATASETS)
+    # check if dataset has name and split attribute
+    assert hasattr(dataset,'name'), 'Please add "name" attribute for dataset'
+    assert hasattr(dataset,'split'), 'Please add "split" attribute for {} dataset'.format(dataset.name)
     #
     if 'samples_per_gpu' in dataset_params:
         temp_samples_per_gpu = dataset_params['samples_per_gpu']

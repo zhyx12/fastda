@@ -10,6 +10,7 @@ import glob
 from fastda.utils import get_root_writer, get_root_logger
 from mmcv.runner import master_only
 
+
 def clip_gradient(model, clip_norm):
     """Computes a gradient clipping coefficient based on gradient norm."""
     totalnorm = torch.tensor(0.0).to('cuda:0')
@@ -107,11 +108,21 @@ class SchedulerStep(Hook):
 
 class TrainTimeLogger(Hook):
     def __init__(self, log_interval):
-        self.start_time = time.time()
-        self.forward_start_time = time.time()
+        self.start_time = None
+        self.forward_start_time = None
+        self.test_start_time = None
+        self.test_flag = False
         self.running_metrics = RunningMetric()  #
-        self.running_metrics.add_metrics('speed', group_name='training_speed', log_interval=log_interval)
-        self.running_metrics.add_metrics('forward_speed', group_name='training_speed', log_interval=log_interval)
+        self.running_metrics.add_metrics('train_speed', group_name='speed', log_interval=log_interval)
+        self.running_metrics.add_metrics('forward_speed', group_name='speed', log_interval=log_interval)
+        self.running_metrics.add_metrics('test_speed', group_name='speed', log_interval=log_interval)
+
+    @master_only
+    def before_train_epoch(self, runner):
+        if self.test_flag:
+            self.running_metrics.update_metrics({'speed': {'test_speed': time.time() - self.test_start_time}})
+            self.running_metrics.log_metrics(runner.iteration,force_log=True, partial_log={'speed':'test_speed'})
+        self.start_time = time.time()
 
     @master_only
     def before_train_iter(self, runner):
@@ -119,11 +130,16 @@ class TrainTimeLogger(Hook):
 
     @master_only
     def after_train_iter(self, runner):
-        self.running_metrics.update_metrics({'training_speed': {'speed': time.time() - self.start_time}})
+        self.running_metrics.update_metrics({'speed': {'train_speed': time.time() - self.start_time}})
         self.running_metrics.update_metrics(
-            {'training_speed': {'forward_speed': time.time() - self.forward_start_time}})
+            {'speed': {'forward_speed': time.time() - self.forward_start_time}})
         self.start_time = time.time()
-        self.running_metrics.log_metrics(runner.iteration + 1)
+        self.running_metrics.log_metrics(runner.iteration + 1,partial_log={'speed':['train_speed','forward_speed']})
+
+    @master_only
+    def after_train_epoch(self, runner):
+        self.test_start_time = time.time()
+        self.test_flag = True
 
 
 class GradientClipper(Hook):
