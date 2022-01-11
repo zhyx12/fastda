@@ -51,21 +51,29 @@ def parse_args_for_one_model(model_args, optimizer_args, scheduler_args, find_un
     if 'lr_scheduler' in model_args:
         model_args.pop('lr_scheduler')
     #
+    tmp_find_unused_parameters = model_args.get('find_unused_parameters', None)
+    final_find_unused_parameters = tmp_find_unused_parameters if tmp_find_unused_parameters is not None else find_unused_parameters
+    tmp_broadcast_buffers = model_args.get('broadcast_buffers', None)
+    final_broadcast_buffers = tmp_broadcast_buffers if tmp_broadcast_buffers is not None else broadcast_buffers
+    tmp_sync_bn = model_args.get('sync_bn', None)
+    final_sync_bn = tmp_sync_bn if tmp_sync_bn is not None else sync_bn
+    if 'find_unused_parameters' in model_args:
+        model_args.pop('find_unused_parameters')
+    if 'broadcast_buffers' in model_args:
+        model_args.pop('broadcast_buffers')
+    if 'sync_bn' in model_args:
+        model_args.pop('sync_bn')
+    #
     device_params = model_args.get('device', 0)
     if 'device' in model_args.keys():
         model_args.pop(device_params)
     # 构造模型
     temp_model = build_models(model_args)
-    tmp_sync_bn = model_args.get('sync_bn', None)
-    final_sync_bn = tmp_sync_bn if tmp_sync_bn is not None else sync_bn
+
     if final_sync_bn:
         logger.info('Use SyncBatchNorm Mode')
         temp_model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(temp_model)
     #
-    tmp_find_unused_parameters = model_args.get('find_unused_parameters', None)
-    final_find_unused_parameters = tmp_find_unused_parameters if tmp_find_unused_parameters is not None else find_unused_parameters
-    tmp_broadcast_buffers = model_args.get('broadcast_buffers', None)
-    final_broadcast_buffers = tmp_broadcast_buffers if tmp_broadcast_buffers is not None else broadcast_buffers
     # move model to gpu
     temp_model = move_models_to_gpu(temp_model, device_params, max_card=max_card,
                                     find_unused_parameters=final_find_unused_parameters,
@@ -92,11 +100,11 @@ def parse_args_for_models(model_args):
     #
     # global find_unused_parameters setting
     find_unused_parameters = model_args.get('find_unused_parameters', False)
-    if find_unused_parameters in model_args:
+    if "find_unused_parameters" in model_args:
         model_args.pop('find_unused_parameters')
     broadcast_buffers = model_args.get('broadcast_buffers',
                                        False)  # set default value to False, which is also adopted in mmcls/mmseg/mmdet
-    if broadcast_buffers in model_args:
+    if "broadcast_buffers" in model_args:
         model_args.pop('broadcast_buffers')
     # global sync_bn setting
     sync_bn = model_args.get('sync_bn', None)
