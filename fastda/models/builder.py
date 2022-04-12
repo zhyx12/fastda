@@ -46,27 +46,17 @@ def parse_args_for_one_model(model_args, optimizer_args, scheduler_args, find_un
             (final_lr_scheduler_args is None and final_optimizer_args is not None):
         raise RuntimeError('You should specify optimizer and scheduler simultaneously')
     #
-    if 'optimizer' in model_args:
-        model_args.pop('optimizer')
-    if 'lr_scheduler' in model_args:
-        model_args.pop('lr_scheduler')
+    model_args.pop('optimizer', None)
+    model_args.pop('lr_scheduler', None)
     #
-    tmp_find_unused_parameters = model_args.get('find_unused_parameters', None)
+    tmp_find_unused_parameters = model_args.pop('find_unused_parameters', None)
     final_find_unused_parameters = tmp_find_unused_parameters if tmp_find_unused_parameters is not None else find_unused_parameters
-    tmp_broadcast_buffers = model_args.get('broadcast_buffers', None)
+    tmp_broadcast_buffers = model_args.pop('broadcast_buffers', None)
     final_broadcast_buffers = tmp_broadcast_buffers if tmp_broadcast_buffers is not None else broadcast_buffers
-    tmp_sync_bn = model_args.get('sync_bn', None)
+    tmp_sync_bn = model_args.pop('sync_bn', None)
     final_sync_bn = tmp_sync_bn if tmp_sync_bn is not None else sync_bn
-    if 'find_unused_parameters' in model_args:
-        model_args.pop('find_unused_parameters')
-    if 'broadcast_buffers' in model_args:
-        model_args.pop('broadcast_buffers')
-    if 'sync_bn' in model_args:
-        model_args.pop('sync_bn')
     #
-    device_params = model_args.get('device', 0)
-    if 'device' in model_args.keys():
-        model_args.pop(device_params)
+    device_params = model_args.pop('device', 0)
     # 构造模型
     temp_model = build_models(model_args)
 
@@ -91,25 +81,15 @@ def parse_args_for_one_model(model_args, optimizer_args, scheduler_args, find_un
 def parse_args_for_models(model_args):
     model_args = copy.deepcopy(model_args)
     #
-    shared_optimizer_params = model_args.get('optimizer', None)
-    if 'optimizer' in model_args:
-        model_args.pop('optimizer')
-    shared_lr_scheduler_param = model_args.get('lr_scheduler', None)
-    if 'lr_scheduler' in model_args:
-        model_args.pop('lr_scheduler')
+    shared_optimizer_params = model_args.pop('optimizer', None)
+    shared_lr_scheduler_param = model_args.pop('lr_scheduler', None)
     #
     # global find_unused_parameters setting
-    find_unused_parameters = model_args.get('find_unused_parameters', False)
-    if "find_unused_parameters" in model_args:
-        model_args.pop('find_unused_parameters')
-    broadcast_buffers = model_args.get('broadcast_buffers',
+    find_unused_parameters = model_args.pop('find_unused_parameters', False)
+    broadcast_buffers = model_args.pop('broadcast_buffers',
                                        False)  # set default value to False, which is also adopted in mmcls/mmseg/mmdet
-    if "broadcast_buffers" in model_args:
-        model_args.pop('broadcast_buffers')
     # global sync_bn setting
-    sync_bn = model_args.get('sync_bn', None)
-    if 'sync_bn' in model_args:
-        model_args.pop('sync_bn')
+    sync_bn = model_args.pop('sync_bn', None)
     #
     model_dict = nn.ModuleDict()
     optimizer_dict = {}
@@ -126,7 +106,7 @@ def parse_args_for_models(model_args):
     for key in model_args:
         temp_res = parse_args_for_one_model(model_args[key], shared_optimizer_params, shared_lr_scheduler_param,
                                             find_unused_parameters=find_unused_parameters, max_card=max_need_card,
-                                            sync_bn=sync_bn)
+                                            sync_bn=sync_bn,broadcast_buffers=broadcast_buffers)
         model_dict[key] = temp_res[0]
         if temp_res[1] is not None:
             optimizer_dict[key] = temp_res[1]

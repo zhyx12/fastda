@@ -59,7 +59,7 @@ class BaseValidator(object):
         #
         self.call_hook('before_val_epoch')
         # 测试
-        for key, loader in self.test_loaders.items():
+        for ind, (key, loader) in enumerate(self.test_loaders.items()):
             self.val_dataset_key = key
             time.sleep(2)
             for val_iter, val_data in enumerate(loader):
@@ -71,6 +71,7 @@ class BaseValidator(object):
                 self.call_hook('before_val_iter')
                 self.batch_output = self.eval_iter(relocated_data)
                 self.batch_output.update({'dataset_name': key})
+                self.batch_output.update({'dataset_index': ind})
                 self.call_hook('after_val_iter')
         # 放在eval_on_dataloader里面，另一个dataloader上的metric没有update过，count=0
         self.call_hook('after_val_epoch')

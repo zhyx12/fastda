@@ -67,11 +67,7 @@ def process_one_dataset(dataset_args, databuilder_args, pipelines, data_root, sa
     assert hasattr(dataset,'name'), 'Please add "name" attribute for dataset'
     assert hasattr(dataset,'split'), 'Please add "split" attribute for {} dataset'.format(dataset.name)
     #
-    if 'samples_per_gpu' in dataset_params:
-        temp_samples_per_gpu = dataset_params['samples_per_gpu']
-        dataset_params.pop('samples_per_gpu')
-    else:
-        temp_samples_per_gpu = samplers_per_gpu
+    temp_samples_per_gpu = dataset_params.pop('samples_per_gpu', None)
     #
     temp_databuilder_args = dict(
         dataset=dataset,
@@ -110,11 +106,10 @@ def parse_args_for_multiple_datasets(dataset_args, data_root, random_seed=None):
     n_workers = dataset_args['n_workers']
     # 训练集
     train_loaders = []
-    for i in range(1, 100):
+    for i in range(100):
         if i in trainset_args.keys():
-            temp_data_builder_args = trainset_args[i].get('builder', None)
+            temp_data_builder_args = trainset_args[i].pop('builder', None)
             assert temp_data_builder_args is not None, "You should specify builder for {} train dataset".format(i)
-            trainset_args[i].pop('builder')
             temp_train_loader = process_one_dataset(trainset_args[i], temp_data_builder_args,
                                                     pipelines=train_pipeline,
                                                     data_root=data_root,
@@ -128,11 +123,10 @@ def parse_args_for_multiple_datasets(dataset_args, data_root, random_seed=None):
 
     # 测试集
     test_loaders = []
-    for i in range(1, 100):
+    for i in range(100):
         if i in testset_args.keys():
-            temp_data_builder_args = testset_args[i].get('builder', None)
+            temp_data_builder_args = testset_args[i].pop('builder', None)
             assert temp_data_builder_args is not None, "You should specify builder for {} test dataset".format(i)
-            testset_args[i].pop('builder')
             temp_test_loader = process_one_dataset(testset_args[i], temp_data_builder_args, pipelines=test_pipeline,
                                                    data_root=data_root,
                                                    samplers_per_gpu=test_samples_per_gpu,

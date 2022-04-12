@@ -16,7 +16,7 @@ from mmcv import Config
 from ..runner import build_trainer, build_validator
 from mmcv.runner import get_dist_info
 from .collect_env import collect_env
-from .basic_utils import init_random_seed, set_random_seed
+from .basic_utils import init_random_seed, set_random_seed, build_custom_hooks
 
 Predefined_Control_Keys = ['max_iters', 'log_interval', 'val_interval', 'save_interval', 'max_save_num',
                            'seed', 'cudnn_deterministic', 'pretrained_model', 'checkpoint', 'test_mode']
@@ -85,6 +85,7 @@ def train(args):
     # gather trainer
     logger.info('Trainer class is {}'.format(args.trainer))
     training_args = cfg.train
+    training_hook_args = training_args.pop('custom_hooks', None)
     training_args.update({
         'type': args.trainer,
         'local_rank': args.local_rank,
@@ -117,6 +118,7 @@ def train(args):
     #
     # build validator
     test_args = cfg.test
+    test_hook_args = test_args.pop('custom_hooks', None)
     test_args.update(
         {
             'type': args.validator,
@@ -127,6 +129,7 @@ def train(args):
             'trainer': trainer,
         }
     )
+    # build evaluator
     validator = build_validator(test_args)
     # test mode: only conduct test process
     test_mode = control_cfg.get('test_mode', False)
@@ -146,6 +149,11 @@ def train(args):
     save_model_hook = SaveCheckpoint(control_cfg['max_save_num'], save_interval=control_cfg['save_interval'])
     trainer.register_hook(save_model_hook,
                           priority='LOWEST')  # save model after scheduler step to get the right iteration number
+    ########################################
+    # build custom training hooks
+    build_custom_hooks(training_hook_args, trainer)
+    # build custom validator hooks
+    build_custom_hooks(test_hook_args, validator)
     # deal with val_interval
     val_point_list = deal_with_val_interval(control_cfg['val_interval'], max_iters=control_cfg['max_iters'],
                                             trained_iteration=trained_iteration)

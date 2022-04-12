@@ -8,6 +8,8 @@ from mmcv.parallel import MMDistributedDataParallel
 import numpy as np
 import random
 import torch.distributed as dist
+from mmcv.utils import build_from_cfg
+from ..hooks import HOOKS
 
 
 def move_data_to_gpu(cpu_data, gpu_id):
@@ -138,6 +140,22 @@ def set_random_seed(seed, deterministic=False):
     if deterministic:
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
+
+
+def build_custom_hooks(hooks_args, runner):
+    if hooks_args is not None:
+        assert isinstance(hooks_args, list), \
+            f'custom_hooks expect list type, but got {type(hooks_args)}'
+        for hook_cfg in hooks_args:
+            assert isinstance(hook_cfg, dict), \
+                'Each item in custom_hooks expects dict type, but got ' \
+                f'{type(hook_cfg)}'
+            hook_cfg = hook_cfg.copy()
+            # hook_cfg.update({"runner", runner})
+            hook_cfg['runner'] = runner
+            priority = hook_cfg.pop('priority', 'NORMAL')
+            hook = build_from_cfg(hook_cfg, HOOKS)
+            runner.register_hook(hook, priority=priority)
 
 
 # utils

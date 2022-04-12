@@ -2,7 +2,7 @@
 # Mail: zhyx12@gmail.com
 # ----------------------------------------------
 import torch
-from mmcv.runner.hooks import Hook
+from mmcv.runner.hooks import Hook, HOOKS
 from fastda.utils.metrics import RunningMetric
 import time
 import os
@@ -121,7 +121,7 @@ class TrainTimeLogger(Hook):
     def before_train_epoch(self, runner):
         if self.test_flag:
             self.running_metrics.update_metrics({'speed': {'test_speed': time.time() - self.test_start_time}})
-            self.running_metrics.log_metrics(runner.iteration,force_log=True, partial_log={'speed':'test_speed'})
+            self.running_metrics.log_metrics(runner.iteration, force_log=True, partial_log={'speed': 'test_speed'})
         self.start_time = time.time()
 
     @master_only
@@ -134,7 +134,7 @@ class TrainTimeLogger(Hook):
         self.running_metrics.update_metrics(
             {'speed': {'forward_speed': time.time() - self.forward_start_time}})
         self.start_time = time.time()
-        self.running_metrics.log_metrics(runner.iteration + 1,partial_log={'speed':['train_speed','forward_speed']})
+        self.running_metrics.log_metrics(runner.iteration + 1, partial_log={'speed': ['train_speed', 'forward_speed']})
 
     @master_only
     def after_train_epoch(self, runner):
