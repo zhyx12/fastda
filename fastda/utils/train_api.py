@@ -84,10 +84,7 @@ def train(args):
     #
     # gather trainer
     logger.info('Trainer class is {}'.format(args.trainer))
-    training_args = cfg.train
-    training_hook_args = training_args.pop('custom_hooks', None)
-    training_args.update({
-        'type': args.trainer,
+    basic_training_parameters = {
         'local_rank': args.local_rank,
         'model_dict': model_dict,
         'optimizer_dict': optimizer_dict,
@@ -95,6 +92,12 @@ def train(args):
         'train_loaders': train_loaders,
         'logdir': logdir,
         'log_interval': control_cfg.log_interval
+    }
+    training_args = cfg.train
+    training_hook_args = training_args.pop('custom_hooks', None)
+    training_args.update({
+        'type': args.trainer,
+        'basic_parameters': basic_training_parameters,
     })
     # build trainer
     trainer = build_trainer(training_args)
@@ -118,15 +121,20 @@ def train(args):
     #
     # build validator
     test_args = cfg.test
+    broadcast_bn_buffer = test_args.pop('broadcast_bn_buffer', True)
+    basic_validation_parameters = {
+        'local_rank': args.local_rank,
+        'model_dict': model_dict,
+        'test_loaders': test_loaders,
+        'logdir': logdir,
+        'broadcast_bn_buffer': broadcast_bn_buffer,
+        'trainer': trainer,
+    }
     test_hook_args = test_args.pop('custom_hooks', None)
     test_args.update(
         {
             'type': args.validator,
-            'local_rank': args.local_rank,
-            'model_dict': model_dict,
-            'test_loaders': test_loaders,
-            'logdir': logdir,
-            'trainer': trainer,
+            'basic_parameters': basic_validation_parameters,
         }
     )
     # build evaluator

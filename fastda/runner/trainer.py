@@ -12,7 +12,7 @@ from mmcv.runner import get_priority
 
 
 class BaseTrainer(object):
-    def __init__(self, local_rank, model_dict, optimizer_dict, scheduler_dict, train_loaders,
+    def __init__(self, local_rank, model_dict, optimizer_dict, scheduler_dict, train_loaders, log_interval,
                  logdir=None):
         self.local_rank = local_rank
         #
@@ -27,6 +27,7 @@ class BaseTrainer(object):
         self.train_loader_iterator = [item.__iter__() for item in self.train_loaders]
         self.train_loader_epoch_count = [0 for i in range(len(self.train_loader_iterator))]
         #
+        self.log_interval = log_interval
         self.logdir = logdir
         self.iteration = self.get_trained_iteration_from_scheduler()
         self._hooks = []
