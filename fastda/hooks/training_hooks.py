@@ -2,7 +2,7 @@
 # Mail: zhyx12@gmail.com
 # ----------------------------------------------
 import torch
-from mmcv.runner.hooks import Hook, HOOKS
+from mmcv.runner.hooks import Hook
 from fastda.utils.metrics import RunningMetric
 import time
 import os

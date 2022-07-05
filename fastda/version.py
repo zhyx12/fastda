@@ -1,6 +1,6 @@
 # Copyright (c) VIMLab. All rights reserved.
 
-__version__ = '0.0.14'
+__version__ = '0.0.15'
 short_version = __version__
 
 

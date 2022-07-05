@@ -1,7 +1,7 @@
 # Author: Vincent Zhang
 # Mail: zhyx12@gmail.com
 # ----------------------------------------------
-from mmcv.runner.hooks import Hook
+from mmcv.runner.hooks import Hook, HOOKS
 from mmcv.runner import get_priority
 from .training_hooks import *
 

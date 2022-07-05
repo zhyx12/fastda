@@ -139,6 +139,8 @@ def train(args):
     )
     # build evaluator
     validator = build_validator(test_args)
+    # build custom validator hooks
+    build_custom_hooks(test_hook_args, validator)
     # test mode: only conduct test process
     test_mode = control_cfg.get('test_mode', False)
     if test_mode:
@@ -160,8 +162,6 @@ def train(args):
     ########################################
     # build custom training hooks
     build_custom_hooks(training_hook_args, trainer)
-    # build custom validator hooks
-    build_custom_hooks(test_hook_args, validator)
     # deal with val_interval
     val_point_list = deal_with_val_interval(control_cfg['val_interval'], max_iters=control_cfg['max_iters'],
                                             trained_iteration=trained_iteration)
