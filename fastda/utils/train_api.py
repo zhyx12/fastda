@@ -23,6 +23,7 @@ Predefined_Control_Keys = ['max_iters', 'log_interval', 'val_interval', 'save_in
 
 
 def train(args):
+    torch.cuda.set_device(args.local_rank)
     torch.distributed.init_process_group(backend="nccl")
     local_rank, world_size = get_dist_info()
     #
