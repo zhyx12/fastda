@@ -65,6 +65,9 @@ def deal_with_val_interval(val_interval, max_iters, trained_iteration=0):
 
     if isinstance(val_interval, (int, float)):
         val_times = int(max_iters / val_interval)
+        if val_times == 0:
+            raise RuntimeError(
+                'max_iters number {} should be larger than val_interval {}'.format(max_iters, val_interval))
         for i in range(1, val_times + 1):
             fine_grained_val_checkpoint.append(i * int(val_interval))
         if fine_grained_val_checkpoint[-1] != max_iters:

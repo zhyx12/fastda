@@ -19,7 +19,8 @@ from .collect_env import collect_env
 from .basic_utils import init_random_seed, set_random_seed, build_custom_hooks
 
 Predefined_Control_Keys = ['max_iters', 'log_interval', 'val_interval', 'save_interval', 'max_save_num',
-                           'seed', 'cudnn_deterministic', 'pretrained_model', 'checkpoint', 'test_mode']
+                           'seed', 'cudnn_deterministic', 'pretrained_model', 'checkpoint', 'test_mode',
+                           'save_best_model']
 
 
 def train(args):
@@ -37,6 +38,15 @@ def train(args):
     control_cfg = cfg.control
     for key in control_cfg.keys():
         assert key in Predefined_Control_Keys, '{} is not allowed appeared in control keys'.format(key)
+    # set default values for control keys
+    max_iters = control_cfg.get('max_iters',100000)
+    log_interval = control_cfg.get('log_interval', 100)
+    val_interval = control_cfg.get('val_interval', 5000)
+    save_interval = control_cfg.get('save_interval', 5000)
+    max_save_num = control_cfg.get('max_save_num', 1)
+    cudnn_deter_flag = control_cfg.get('cudnn_deterministic', False)
+    test_mode = control_cfg.get('test_mode', False)
+    save_best_model = control_cfg.get('save_best_model', True)
     # create log dir
     run_id = random.randint(1, 100000)
     run_id_tensor = torch.ones((1,), device='cuda:{}'.format(local_rank)) * run_id
@@ -72,8 +82,8 @@ def train(args):
     seed = control_cfg.get('seed', None)
     random_seed = init_random_seed(seed)
     logger.info(f'Set random random_seed to {random_seed}, '
-                f'deterministic: {control_cfg.cudnn_deterministic}')
-    set_random_seed(random_seed, deterministic=control_cfg.cudnn_deterministic)
+                f'deterministic: {cudnn_deter_flag}')
+    set_random_seed(random_seed, deterministic=cudnn_deter_flag)
     #
     # build dataloader
     train_loaders, test_loaders = parse_args_for_multiple_datasets(cfg['datasets'],
@@ -92,7 +102,7 @@ def train(args):
         'scheduler_dict': scheduler_dict,
         'train_loaders': train_loaders,
         'logdir': logdir,
-        'log_interval': control_cfg.log_interval
+        'log_interval': log_interval,
     }
     training_args = cfg.train
     training_hook_args = training_args.pop('custom_hooks', None)
@@ -143,13 +153,12 @@ def train(args):
     # build custom validator hooks
     build_custom_hooks(test_hook_args, validator)
     # test mode: only conduct test process
-    test_mode = control_cfg.get('test_mode', False)
     if test_mode:
         validator(trainer.iteration)
         exit(0)
     ########################################
     # register training hooks
-    log_interval = control_cfg.log_interval
+
     updater_iter = control_cfg.get('update_iter', 1)
     train_time_recoder = TrainTimeLogger(log_interval)
     trainer.register_hook(train_time_recoder)
@@ -157,14 +166,14 @@ def train(args):
     lr_recoder = LrLogger(log_interval)
     trainer.register_hook(lr_recoder, priority='HIGH')
     trainer.register_hook(scheduler_step, priority='VERY_LOW')
-    save_model_hook = SaveCheckpoint(control_cfg['max_save_num'], save_interval=control_cfg['save_interval'])
+    save_model_hook = SaveCheckpoint(max_save_num=max_save_num, save_interval=save_interval)
     trainer.register_hook(save_model_hook,
                           priority='LOWEST')  # save model after scheduler step to get the right iteration number
     ########################################
     # build custom training hooks
     build_custom_hooks(training_hook_args, trainer)
     # deal with val_interval
-    val_point_list = deal_with_val_interval(control_cfg['val_interval'], max_iters=control_cfg['max_iters'],
+    val_point_list = deal_with_val_interval(val_interval, max_iters=max_iters,
                                             trained_iteration=trained_iteration)
     # start training and testing
     last_val_point = trained_iteration
@@ -175,7 +184,7 @@ def train(args):
         # test
         save_flag, early_stop_flag = validator(trainer.iteration)
         #
-        if save_flag:
+        if save_flag and save_best_model:
             save_path = os.path.join(trainer.logdir, "best_model.pth".format(trainer.iteration))
             torch.save(trainer.state_dict(), save_path)
         # early stop

@@ -168,4 +168,5 @@ class SaveCheckpoint(Hook):
             if len(saved_files) >= self.max_save_num:
                 sorted_files_by_ctime = sorted(saved_files, key=lambda x: os.path.getctime(x))
                 os.remove(sorted_files_by_ctime[0])
-            torch.save(runner.state_dict(), save_path)
+            if self.max_save_num > 0:
+                torch.save(runner.state_dict(), save_path)
